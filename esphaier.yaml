@@ -1,0 +1,37 @@
+esphome:
+  name: haier
+  platform: ESP8266
+  board: d1_mini
+  includes:
+    - Haier.h
+
+
+logger:
+  level: DEBUG
+  baud_rate: 0 #Important. You can't use serial port
+  
+  
+wifi:
+  ssid: ""
+  password: ""
+
+
+# Enable Home Assistant API
+api:
+  password: ""
+
+ota:
+  password: ""
+
+
+
+  
+  
+climate:
+  - platform: custom
+    lambda: |-
+      auto haier = new Haier();
+      App.register_component(haier);
+      return {haier};
+    climates:
+      - name: "Haier"
