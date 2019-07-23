@@ -88,13 +88,7 @@ public:
 			data[0] = 255;
 			data[1] = 255;
 			
-            ESP_LOGD("Haier", "Disponible parar leer %d", Serial.available());
-
             Serial.readBytes(data+2, sizeof(data)-2);
-
-            ESP_LOGD("Haier", "Leidos todos los datos");
-
-            ESP_LOGD("Haier", "Datos restantes %d", Serial.available());
 
             readData();
 
