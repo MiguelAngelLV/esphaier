@@ -87,7 +87,7 @@ public:
 			
 			data[0] = 255;
 			data[1] = 255;
-			
+
             Serial.readBytes(data+2, sizeof(data)-2);
 
             readData();
