@@ -14,22 +14,22 @@ using namespace esphome::climate;
 #define COMMAND       17
 
 #define MODE 23
-#define MODE_SMART 00
-#define MODE_COOL 01
-#define MODE_HEAT 02
-#define MODE_ONLY_FAN 03
-#define MODE_DRY 04
+#define MODE_SMART 0
+#define MODE_COOL 1
+#define MODE_HEAT 2
+#define MODE_ONLY_FAN 3
+#define MODE_DRY 4
 
 #define FAN_SPEED   25
-#define FAN_MIN     02
-#define FAN_MIDDLE  01
-#define FAN_MAX     02
-#define FAN_AUTO    03
+#define FAN_MIN     2
+#define FAN_MIDDLE  1
+#define FAN_MAX     2
+#define FAN_AUTO    3
 
 #define SWING        27
-#define SWING_OFF          00
-#define SWING_VERTICAL     01
-#define SWING_HORIZONTAL   02
+#define SWING_OFF          0
+#define SWING_VERTICAL     1
+#define SWING_HORIZONTAL   2
 #define SWING_BOTH
 
 #define LOCK        28
@@ -37,12 +37,14 @@ using namespace esphome::climate;
 #define LOCK_OFF    00
 
 #define POWER       29
-#define POWER_ON    25
-#define POWER_OFF   24
+#define POWER_ON    9
+#define POWER_OFF   8
+#define POWER_ON_2    25
+#define POWER_OFF_2   24
 
 
 #define FRESH       31
-#define FRESH_ON    01
+#define FRESH_ON    1
 #define FRESH_OFF   0
 
 #define SET_TEMPERATURE 35
@@ -155,7 +157,7 @@ public:
         }
 
 
-        if (data[POWER] == POWER_OFF) {
+        if (data[POWER] == POWER_OFF || data[POWER] == POWER_OFF_2) {
             mode = CLIMATE_MODE_OFF;
 
         } else {
