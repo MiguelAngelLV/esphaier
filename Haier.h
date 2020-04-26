@@ -10,28 +10,26 @@
 using namespace esphome;
 using namespace esphome::climate;
 
-
 #define TEMPERATURE   13
 #define COMMAND       17
 
-
 #define MODE 23
-#define MODE_SMART 00
-#define MODE_COOL 01
-#define MODE_HEAT 02
-#define MODE_ONLY_FAN 03
-#define MODE_DRY 04
+#define MODE_SMART 0
+#define MODE_COOL 1
+#define MODE_HEAT 2
+#define MODE_ONLY_FAN 3
+#define MODE_DRY 4
 
 #define FAN_SPEED   25
-#define FAN_MIN     02
-#define FAN_MIDDLE  01
-#define FAN_MAX     02
-#define FAN_AUTO    03
+#define FAN_MIN     2
+#define FAN_MIDDLE  1
+#define FAN_MAX     2
+#define FAN_AUTO    3
 
 #define SWING        27
-#define SWING_OFF          00
-#define SWING_VERTICAL     01
-#define SWING_HORIZONTAL   02
+#define SWING_OFF          0
+#define SWING_VERTICAL     1
+#define SWING_HORIZONTAL   2
 #define SWING_BOTH
 
 #define LOCK        28
@@ -41,15 +39,25 @@ using namespace esphome::climate;
 #define POWER       29
 #define POWER_ON    9
 #define POWER_OFF   8
+#define POWER_ON_2    25
+#define POWER_OFF_2   24
 
 
 #define FRESH       31
-#define FRESH_ON    01
-#define FRESH_OFF   00
+#define FRESH_ON    1
+#define FRESH_OFF   0
 
 #define SET_TEMPERATURE 35
 
 #define CRC 36
+
+// temperatures supported by AC system
+#define MIN_SET_TEMPERATURE 16
+#define MAX_SET_TEMPERATURE 30
+
+//if internal temperature is outside of those boundaries, message will be discarded
+#define MIN_VALID_INTERNAL_TEMP 10
+#define MAX_VALID_INTERNAL_TEMP 50
 
 class Haier : public Climate, public PollingComponent {
 
@@ -110,8 +118,8 @@ protected:
         traits.set_supports_auto_mode(true);
         traits.set_supports_heat_mode(true);
         traits.set_supports_cool_mode(true);
-        traits.set_visual_max_temperature(10);
-        traits.set_visual_max_temperature(50);
+        traits.set_visual_min_temperature(MIN_SET_TEMPERATURE);
+        traits.set_visual_max_temperature(MAX_SET_TEMPERATURE);
         traits.set_visual_temperature_step(1.0f);
         traits.set_supports_current_temperature(true);
 
@@ -132,7 +140,7 @@ public:
         getChecksum(data, sizeof(data));
 
         if (check != data[CRC]) {
-            ESP_LOGD("Haier", "Invalid checksum");
+            ESP_LOGW("Haier", "Invalid checksum");
             return;
         }
 
@@ -142,8 +150,14 @@ public:
         current_temperature = data[TEMPERATURE];
         target_temperature = data[SET_TEMPERATURE] + 16;
 
+        if(current_temperature < MIN_VALID_INTERNAL_TEMP || current_temperature > MAX_VALID_INTERNAL_TEMP 
+            || target_temperature < MIN_SET_TEMPERATURE || target_temperature > MAX_SET_TEMPERATURE){
+            ESP_LOGW("Haier", "Invalid temperatures");
+            return;
+        }
 
-        if (data[POWER] == POWER_OFF) {
+
+        if (data[POWER] == POWER_OFF || data[POWER] == POWER_OFF_2) {
             mode = CLIMATE_MODE_OFF;
 
         } else {

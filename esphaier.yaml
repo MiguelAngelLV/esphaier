@@ -1,32 +1,37 @@
 esphome:
-  name: haier
+  name: haierac
   platform: ESP8266
-  board: d1_mini
+  board: esp12e
   includes:
     - Haier.h
 
+status_led:
+  pin: GPIO16
 
-logger:
-  level: DEBUG
-  baud_rate: 0 #Important. You can't use serial port
-  
-  
 wifi:
   ssid: ""
   password: ""
 
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: ""
+    password: ""
+
+captive_portal:
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: "Europe/Warsaw"
+
+# Enable logging
+logger:
 
 # Enable Home Assistant API
 api:
-  password: ""
 
 ota:
-  password: ""
 
-
-
-  
-  
 climate:
   - platform: custom
     lambda: |-
