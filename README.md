@@ -1,4 +1,5 @@
  # ESP Haier
+ ## for dev version ESPhome only!!!
  
  ESP Haier is a project to use a ESP8266 (I did not test with ESP32) to control Haier Air Conditioner with wifi module supoort with ESPHome and Home Assisant.
  
