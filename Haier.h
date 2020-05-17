@@ -10,46 +10,65 @@
 using namespace esphome;
 using namespace esphome::climate;
 
-
 #define TEMPERATURE   13
 #define COMMAND       17
 
-
 #define MODE 23
-#define MODE_SMART 00
-#define MODE_COOL 01
-#define MODE_HEAT 02
-#define MODE_ONLY_FAN 03
-#define MODE_DRY 04
+#define MODE_SMART 0
+#define MODE_COOL 1
+#define MODE_HEAT 2
+#define MODE_FAN_ONLY 3
+#define MODE_DRY 4
 
 #define FAN_SPEED   25
-#define FAN_MIN     02
-#define FAN_MIDDLE  01
-#define FAN_MAX     02
-#define FAN_AUTO    03
+#define FAN_LOW     2
+#define FAN_MIDDLE  1
+#define FAN_HIGH     0
+#define FAN_AUTO            3
 
-#define SWING        27
-#define SWING_OFF          00
-#define SWING_VERTICAL     01
-#define SWING_HORIZONTAL   02
-#define SWING_BOTH
+#define SWING            27
+#define SWING_OFF        0
+#define SWING_BOTH       1
 
-#define LOCK        28
-#define LOCK_ON     80
-#define LOCK_OFF    00
+#define SWING_POS           31
+#define SWING_UNDEFINED     0
+#define SWING_HORIZONTAL    8
+#define SWING_VERTICAL      16
+// bit  >>
+#define SILENT_MODE_ON      4
+#define TURBO_MODE_ON       2
 
-#define POWER       29
-#define POWER_ON    9
-#define POWER_OFF   8
+#define LOCK                28
+#define LOCK_ON             80
+#define LOCK_OFF            00
 
+#define POWER           29
+#define POWER_ON        1
+#define POWER_OFF       0
+#define POWER_ON_1      9
+#define POWER_OFF_1     8
+#define POWER_ON_2      25
+#define POWER_OFF_2     24
+// bit  >>
+#define HEALTH_MODE_ON  8
+#define XXXXX_MODE_ON   16
 
 #define FRESH       31
-#define FRESH_ON    01
-#define FRESH_OFF   00
+#define FRESH_ON    1
+#define FRESH_OFF   0
 
 #define SET_TEMPERATURE 35
 
 #define CRC 36
+
+// temperatures supported by AC system
+#define MIN_SET_TEMPERATURE 16
+#define MAX_SET_TEMPERATURE 30
+#define STEP_TEMPERATURE 1
+
+//if internal temperature is outside of those boundaries, message will be discarded
+#define MIN_VALID_INTERNAL_TEMP 10
+#define MAX_VALID_INTERNAL_TEMP 50
 
 class Haier : public Climate, public PollingComponent {
 
@@ -110,10 +129,25 @@ protected:
         traits.set_supports_auto_mode(true);
         traits.set_supports_heat_mode(true);
         traits.set_supports_cool_mode(true);
-        traits.set_visual_max_temperature(10);
-        traits.set_visual_max_temperature(50);
-        traits.set_visual_temperature_step(1.0f);
+        traits.set_supports_dry_mode(true);
+        traits.set_supports_fan_only_mode(true);
+        traits.set_supports_fan_mode_on(false);
+        traits.set_supports_fan_mode_off(false);
+        traits.set_supports_fan_mode_auto(true);
+        traits.set_supports_fan_mode_low(true);
+        traits.set_supports_fan_mode_medium(false);
+        traits.set_supports_fan_mode_middle(true);
+        traits.set_supports_fan_mode_high(true);
+        traits.set_supports_fan_mode_focus(false);
+        traits.set_supports_fan_mode_diffuse(false);
+        traits.set_visual_min_temperature(MIN_SET_TEMPERATURE);
+        traits.set_visual_max_temperature(MAX_SET_TEMPERATURE);
+        traits.set_visual_temperature_step(STEP_TEMPERATURE);
         traits.set_supports_current_temperature(true);
+        traits.set_supports_swing_mode_off(true);
+        traits.set_supports_swing_mode_both(true);
+        traits.set_supports_swing_mode_vertical(true);
+        traits.set_supports_swing_mode_horizontal(true);
 
         return traits;
     }
@@ -132,7 +166,7 @@ public:
         getChecksum(data, sizeof(data));
 
         if (check != data[CRC]) {
-            ESP_LOGD("Haier", "Invalid checksum");
+            ESP_LOGW("Haier", "Invalid checksum");
             return;
         }
 
@@ -142,8 +176,14 @@ public:
         current_temperature = data[TEMPERATURE];
         target_temperature = data[SET_TEMPERATURE] + 16;
 
+        if(current_temperature < MIN_VALID_INTERNAL_TEMP || current_temperature > MAX_VALID_INTERNAL_TEMP 
+            || target_temperature < MIN_SET_TEMPERATURE || target_temperature > MAX_SET_TEMPERATURE){
+            ESP_LOGW("Haier", "Invalid temperatures");
+            return;
+        }
 
-        if (data[POWER] == POWER_OFF) {
+
+        if (data[POWER] == POWER_OFF || data[POWER] == POWER_OFF_2) {
             mode = CLIMATE_MODE_OFF;
 
         } else {
@@ -155,18 +195,72 @@ public:
                 case MODE_HEAT:
                     mode = CLIMATE_MODE_HEAT;
                     break;
+                case MODE_DRY:
+                    mode = CLIMATE_MODE_DRY;
+                    break;
+                case MODE_FAN_ONLY:
+                    mode = CLIMATE_MODE_FAN_ONLY;
+                    break;
                 default:
                     mode = CLIMATE_MODE_AUTO;
             }
+        }
 
 
+        if (data[POWER] == POWER_OFF || data[POWER] == POWER_OFF_1 || data[POWER] == POWER_OFF_2) {
+            fan_mode = CLIMATE_FAN_OFF;
+
+        } else {
+
+            switch (data[FAN_SPEED]) {
+                case FAN_AUTO:
+                    fan_mode = CLIMATE_FAN_AUTO;
+                    break;
+                case FAN_LOW:
+                    fan_mode = CLIMATE_FAN_LOW;
+                    break;
+                case FAN_MIDDLE:
+                    fan_mode = CLIMATE_FAN_MIDDLE;
+                    break;
+                case FAN_HIGH:
+                    fan_mode = CLIMATE_FAN_HIGH;
+                    break;
+                default:
+                    fan_mode = CLIMATE_FAN_AUTO;
+            }
+        }
+
+
+        if (data[POWER] == POWER_OFF || data[POWER] == POWER_OFF_2) {
+            swing_mode = CLIMATE_SWING_OFF;
+
+        } else {
+            switch (data[SWING]) {
+                case SWING_OFF: {
+                    switch (data[SWING_POS]) {
+                        case SWING_VERTICAL:
+                            swing_mode = CLIMATE_SWING_VERTICAL;
+                            break;
+                        case SWING_HORIZONTAL:
+                            swing_mode = CLIMATE_SWING_HORIZONTAL;
+                            break;
+                        case SWING_UNDEFINED:
+                            swing_mode = CLIMATE_SWING_OFF;
+                            break;
+                        }
+                    }
+                    break;
+                case SWING_BOTH:
+                    swing_mode = CLIMATE_SWING_BOTH;
+                    break;
+            }
         }
 
         this->publish_state();
 
     }
 
-
+// Climate control
     void control(const ClimateCall &call) override {
 
         if (call.get_mode().has_value())
@@ -174,20 +268,74 @@ public:
                 case CLIMATE_MODE_OFF:
                     data[POWER] = POWER_OFF;
                     break;
-                case CLIMATE_MODE_AUTO:
+                case CLIMATE_MODE_COOL:
                     data[POWER] = POWER_ON;
-                    data[MODE] = MODE_SMART;
+                    data[MODE] = MODE_COOL;
                     break;
                 case CLIMATE_MODE_HEAT:
                     data[POWER] = POWER_ON;
                     data[MODE] = MODE_HEAT;
                     break;
-                case CLIMATE_MODE_COOL:
+                case CLIMATE_MODE_DRY:
                     data[POWER] = POWER_ON;
-                    data[MODE] = MODE_COOL;
+                    data[MODE] = MODE_DRY;
+                    break;
+                case CLIMATE_MODE_FAN_ONLY:
+                    data[POWER] = POWER_ON;
+                    data[MODE] = MODE_FAN_ONLY;
+                    break;
+                case CLIMATE_MODE_AUTO:
+                    data[POWER] = POWER_ON;
+                    data[MODE] = MODE_SMART;
                     break;
             }
 
+        //Set fan speed
+        if (call.get_fan_mode().has_value())
+            switch(call.get_fan_mode().value()) {
+                case CLIMATE_FAN_LOW:
+                    data[POWER] = POWER_ON;
+                    data[FAN_SPEED] = FAN_LOW;
+                    break;
+                case CLIMATE_FAN_MIDDLE:
+                    data[POWER] = POWER_ON;
+                    data[FAN_SPEED] = FAN_MIDDLE;
+                    break;
+                case CLIMATE_FAN_HIGH:
+                    data[POWER] = POWER_ON;
+                    data[FAN_SPEED] = FAN_HIGH;
+                    break;
+                case CLIMATE_FAN_AUTO:
+                    data[POWER] = POWER_ON;
+                    data[FAN_SPEED] = FAN_AUTO;
+                    break;
+        }
+
+
+        //Set swing mode
+        if (call.get_swing_mode().has_value())
+            switch(call.get_swing_mode().value()) {
+                case CLIMATE_SWING_OFF:
+                    data[POWER] = POWER_ON;
+                    data[SWING] = SWING_OFF;
+                    data[SWING_POS] = SWING_UNDEFINED;
+                    break;
+                case CLIMATE_SWING_VERTICAL:
+                    data[POWER] = POWER_ON;
+                    data[SWING] = SWING_OFF;
+                    data[SWING_POS] = SWING_VERTICAL;
+                    break;
+                case CLIMATE_SWING_HORIZONTAL:
+                    data[POWER] = POWER_ON;
+                    data[SWING] = SWING_OFF;
+                    data[SWING_POS] = SWING_HORIZONTAL;
+                    break;
+                case CLIMATE_SWING_BOTH:
+                    data[POWER] = POWER_ON;
+                    data[SWING] = SWING_BOTH;
+                    data[SWING_POS] = SWING_UNDEFINED;
+                    break;
+        }
 
         if (call.get_target_temperature().has_value()) {
             data[SET_TEMPERATURE] = (uint16) call.get_target_temperature().value() - 16;

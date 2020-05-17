@@ -5,16 +5,34 @@ esphome:
   includes:
     - Haier.h
 
+# Set statul led for Wemos D1 mini
+status_led:
+  pin: GPIO2
 
-logger:
-  level: DEBUG
-  baud_rate: 0 #Important. You can't use serial port
-  
-  
 wifi:
   ssid: ""
   password: ""
 
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Haier_wifi"
+    password: "Haier_wifi"
+
+captive_portal:
+
+# Enable web server (can be disabled)
+web_server:
+  port: 80
+
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: "Asia/ Yekaterinburg"
+
+# Enable logging
+logger:
+  level: DEBUG
+  baud_rate: 0 #Important. You can't use serial port
 
 # Enable Home Assistant API
 api:
@@ -23,10 +41,6 @@ api:
 ota:
   password: ""
 
-
-
-  
-  
 climate:
   - platform: custom
     lambda: |-
