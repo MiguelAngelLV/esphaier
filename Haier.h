@@ -183,12 +183,7 @@ public:
         }
 
 
-        if (data[POWER] & ( 0 << POWER_BIT_ON )) {
-            mode = CLIMATE_MODE_OFF;
-            fan_mode = CLIMATE_FAN_OFF;
-            swing_mode = CLIMATE_SWING_OFF;
-
-        } else {
+        if (data[POWER] & ( 1 << POWER_BIT_ON )) {
 
             switch (data[MODE]) {
                 case MODE_COOL:
@@ -237,7 +232,12 @@ public:
                 case SWING_BOTH:
                     swing_mode = CLIMATE_SWING_BOTH;
                     break;
-            }
+
+            } 
+        } else {
+            mode = CLIMATE_MODE_OFF;
+            //fan_mode = CLIMATE_FAN_OFF;
+            //swing_mode = CLIMATE_SWING_OFF;
         }
 
         this->publish_state();
