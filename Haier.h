@@ -10,44 +10,39 @@
 using namespace esphome;
 using namespace esphome::climate;
 
-#define TEMPERATURE   13
-#define COMMAND       17
+#define TEMPERATURE     13
+#define COMMAND         17
 
-#define MODE 23
-#define MODE_SMART 0
-#define MODE_COOL 1
-#define MODE_HEAT 2
-#define MODE_FAN_ONLY 3
-#define MODE_DRY 4
+#define MODE            23
+#define MODE_SMART      0
+#define MODE_COOL       1
+#define MODE_HEAT       2
+#define MODE_FAN_ONLY   3
+#define MODE_DRY        4
 
-#define FAN_SPEED   25
-#define FAN_LOW     2
-#define FAN_MIDDLE  1
-#define FAN_HIGH     0
-#define FAN_AUTO            3
+#define FAN_SPEED       25
+#define FAN_LOW         2
+#define FAN_MIDDLE      1
+#define FAN_HIGH        0
+#define FAN_AUTO        3
 
-#define SWING            27
-#define SWING_OFF        0
-#define SWING_BOTH       1
+#define SWING           27
+#define SWING_OFF       0
+#define SWING_BOTH      1
 
-#define LOCK                28
-#define LOCK_ON             80
-#define LOCK_OFF            00
+#define LOCK            28
+#define LOCK_ON         80
+#define LOCK_OFF        00
 
 #define POWER           29
-#define POWER_ON        1
-#define POWER_OFF       0
-// bit  >>
+// bit position  >>
 #define POWER_BIT_ON             0
 #define HEALTH_MODE_BIT_ON       3
 #define COMPRESSOR_MODE_BIT_ON   4
 
-#define SWING_POS           31
-#define SWING_UNDEFINED     0
-#define SWING_HORIZONTAL    8
-#define SWING_VERTICAL      16
-// bit  >>
-#define FRESH_BIT_ON            0
+#define SWING_POS               31
+// bit position >>
+#define SWING_UNDEFINED_BIT     0
 #define TURBO_MODE_BIT_ON       1
 #define SILENT_MODE_BIT_ON      2
 #define SWING_HORIZONTAL_BIT    3
@@ -247,26 +242,26 @@ public:
         if (call.get_mode().has_value())
             switch (call.get_mode().value()) {
                 case CLIMATE_MODE_OFF:
-                    data[POWER] = POWER_OFF;
+                    data[POWER] &= ~(1 << POWER_BIT_ON);
                     break;
                 case CLIMATE_MODE_COOL:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[MODE] = MODE_COOL;
                     break;
                 case CLIMATE_MODE_HEAT:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[MODE] = MODE_HEAT;
                     break;
                 case CLIMATE_MODE_DRY:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[MODE] = MODE_DRY;
                     break;
                 case CLIMATE_MODE_FAN_ONLY:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[MODE] = MODE_FAN_ONLY;
                     break;
                 case CLIMATE_MODE_AUTO:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[MODE] = MODE_SMART;
                     break;
             }
@@ -275,19 +270,19 @@ public:
         if (call.get_fan_mode().has_value())
             switch(call.get_fan_mode().value()) {
                 case CLIMATE_FAN_LOW:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_LOW;
                     break;
                 case CLIMATE_FAN_MIDDLE:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_MIDDLE;
                     break;
                 case CLIMATE_FAN_HIGH:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_HIGH;
                     break;
                 case CLIMATE_FAN_AUTO:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_AUTO;
                     break;
         }
@@ -297,24 +292,28 @@ public:
         if (call.get_swing_mode().has_value())
             switch(call.get_swing_mode().value()) {
                 case CLIMATE_SWING_OFF:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[SWING] = SWING_OFF;
-                    data[SWING_POS] = SWING_UNDEFINED;
+                    data[SWING_POS] &= ~(1 << SWING_UNDEFINED_BIT);
                     break;
                 case CLIMATE_SWING_VERTICAL:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[SWING] = SWING_OFF;
-                    data[SWING_POS] = SWING_VERTICAL;
+                    data[SWING_POS] |= (1 << SWING_VERTICAL_BIT);
+                    data[SWING_POS] &= ~(1 << SWING_HORIZONTAL_BIT);
                     break;
                 case CLIMATE_SWING_HORIZONTAL:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[SWING] = SWING_OFF;
-                    data[SWING_POS] = SWING_HORIZONTAL;
+                    data[SWING_POS] |= (1 << SWING_HORIZONTAL_BIT);
+                    data[SWING_POS] &= ~(1 << SWING_VERTICAL_BIT);
                     break;
                 case CLIMATE_SWING_BOTH:
-                    data[POWER] = POWER_ON;
+                    data[POWER] |= (1 << POWER_BIT_ON);
                     data[SWING] = SWING_BOTH;
-                    data[SWING_POS] = SWING_UNDEFINED;
+                    data[SWING_POS] &= ~(1 << SWING_UNDEFINED_BIT);
+                    data[SWING_POS] &= ~(1 << SWING_VERTICAL_BIT);
+                    data[SWING_POS] &= ~(1 << SWING_HORIZONTAL_BIT);
                     break;
         }
 
