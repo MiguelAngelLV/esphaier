@@ -30,16 +30,6 @@ using namespace esphome::climate;
 #define SWING_OFF        0
 #define SWING_BOTH       1
 
-#define SWING_POS           31
-#define SWING_UNDEFINED     0
-#define SWING_HORIZONTAL    8
-#define SWING_VERTICAL      16
-// bit  >>
-#define TURBO_MODE_BIT_ON       1
-#define SILENT_MODE_BIT_ON      2
-#define SWING_HORIZONTAL_BIT    3
-#define SWING_VERTICAL_BIT      4
-
 #define LOCK                28
 #define LOCK_ON             80
 #define LOCK_OFF            00
@@ -48,14 +38,21 @@ using namespace esphome::climate;
 #define POWER_ON        1
 #define POWER_OFF       0
 // bit  >>
-#define POWER_BIT_ON        0
-#define HEALTH_MODE_BIT_ON  3
-#define XXXXX_MODE_BIT_ON   4
+#define POWER_BIT_ON             0
+#define HEALTH_MODE_BIT_ON       3
+#define COMPRESSOR_MODE_BIT_ON   4
 
-
-#define FRESH       31
-#define FRESH_ON    1
-#define FRESH_OFF   0
+#define SWING_POS           31
+#define SWING_UNDEFINED     0
+#define SWING_HORIZONTAL    8
+#define SWING_VERTICAL      16
+// bit  >>
+#define FRESH_BIT_ON            0
+#define TURBO_MODE_BIT_ON       1
+#define SILENT_MODE_BIT_ON      2
+#define SWING_HORIZONTAL_BIT    3
+#define SWING_VERTICAL_BIT      4
+#define LED_BIT_OFF             5
 
 #define SET_TEMPERATURE 35
 
