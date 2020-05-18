@@ -13,10 +13,5 @@
  This project is based in the works of Instalator and his project [Haier Wifi](https://github.com/instalator/Haier_WiFi/)
  
  
- I use a Wemos D1 Mini with a "hacked" USB cable. I cut the USB cable and connect directly to Wemos:
- 
- - Red -> 5V 
- - Black -> GND 
- - Green -> RX 
- - White -> TX
+ I use a Wemos D1 Mini for connecting to air conditioning. I recommend using a TLL level (5to3.3V) converter:
  
