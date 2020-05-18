@@ -35,8 +35,10 @@ using namespace esphome::climate;
 #define SWING_HORIZONTAL    8
 #define SWING_VERTICAL      16
 // bit  >>
-#define SILENT_MODE_ON      4
-#define TURBO_MODE_ON       2
+#define TURBO_MODE_BIT_ON       1
+#define SILENT_MODE_BIT_ON      2
+#define SWING_HORIZONTAL_BIT    3
+#define SWING_VERTICAL_BIT      4
 
 #define LOCK                28
 #define LOCK_ON             80
@@ -45,13 +47,11 @@ using namespace esphome::climate;
 #define POWER           29
 #define POWER_ON        1
 #define POWER_OFF       0
-#define POWER_ON_1      9
-#define POWER_OFF_1     8
-#define POWER_ON_2      25
-#define POWER_OFF_2     24
 // bit  >>
-#define HEALTH_MODE_ON  8
-#define XXXXX_MODE_ON   16
+#define POWER_BIT_ON        0
+#define HEALTH_MODE_BIT_ON  3
+#define XXXXX_MODE_BIT_ON   4
+
 
 #define FRESH       31
 #define FRESH_ON    1
@@ -183,8 +183,10 @@ public:
         }
 
 
-        if (data[POWER] == POWER_OFF || data[POWER] == POWER_OFF_2) {
+        if (data[POWER] & ( 0 << POWER_BIT_ON )) {
             mode = CLIMATE_MODE_OFF;
+            fan_mode = CLIMATE_FAN_OFF;
+            swing_mode = CLIMATE_SWING_OFF;
 
         } else {
 
@@ -204,13 +206,6 @@ public:
                 default:
                     mode = CLIMATE_MODE_AUTO;
             }
-        }
-
-
-        if (data[POWER] == POWER_OFF || data[POWER] == POWER_OFF_1 || data[POWER] == POWER_OFF_2) {
-            fan_mode = CLIMATE_FAN_OFF;
-
-        } else {
 
             switch (data[FAN_SPEED]) {
                 case FAN_AUTO:
@@ -228,26 +223,15 @@ public:
                 default:
                     fan_mode = CLIMATE_FAN_AUTO;
             }
-        }
 
-
-        if (data[POWER] == POWER_OFF || data[POWER] == POWER_OFF_2) {
-            swing_mode = CLIMATE_SWING_OFF;
-
-        } else {
             switch (data[SWING]) {
-                case SWING_OFF: {
-                    switch (data[SWING_POS]) {
-                        case SWING_VERTICAL:
-                            swing_mode = CLIMATE_SWING_VERTICAL;
-                            break;
-                        case SWING_HORIZONTAL:
-                            swing_mode = CLIMATE_SWING_HORIZONTAL;
-                            break;
-                        case SWING_UNDEFINED:
-                            swing_mode = CLIMATE_SWING_OFF;
-                            break;
-                        }
+                case SWING_OFF: 
+                    if ( data[SWING_POS] & ( 1 << SWING_VERTICAL_BIT )) {
+                        swing_mode = CLIMATE_SWING_VERTICAL;
+                    } else if ( data[SWING_POS] & ( 1 << SWING_HORIZONTAL_BIT )) {
+                        swing_mode = CLIMATE_SWING_HORIZONTAL;
+                    } else {
+                        swing_mode = CLIMATE_SWING_OFF;
                     }
                     break;
                 case SWING_BOTH:
