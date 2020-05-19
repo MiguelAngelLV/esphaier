@@ -57,6 +57,7 @@ using namespace esphome::climate;
 #define MIN_SET_TEMPERATURE 16
 #define MAX_SET_TEMPERATURE 30
 #define STEP_TEMPERATURE 1
+#define TEMPERATURE_FOR_FAN_ONLY    8
 
 //if internal temperature is outside of those boundaries, message will be discarded
 #define MIN_VALID_INTERNAL_TEMP 10
@@ -257,6 +258,11 @@ public:
                     data[MODE] = MODE_DRY;
                     break;
                 case CLIMATE_MODE_FAN_ONLY:
+                    if (data[POWER] & ( 1 << POWER_BIT_ON )) {
+                        //ESP_LOGW("Haier", "Cold start");
+                    } else {
+                        data[SET_TEMPERATURE] = TEMPERATURE_FOR_FAN_ONLY;
+                    }
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[MODE] = MODE_FAN_ONLY;
                     break;
@@ -328,7 +334,6 @@ public:
         data[11] = 95;
 
         sendData(data, sizeof(data));
-
 
     }
 
