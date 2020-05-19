@@ -264,6 +264,7 @@ public:
                         data[SET_TEMPERATURE] = TEMPERATURE_FOR_FAN_ONLY;
                     }
                     data[POWER] |= (1 << POWER_BIT_ON);
+                    data[FAN_SPEED] = FAN_MIDDLE; // set fan speed for change work mode
                     data[MODE] = MODE_FAN_ONLY;
                     break;
                 case CLIMATE_MODE_AUTO:
