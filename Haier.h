@@ -21,9 +21,9 @@ using namespace esphome::climate;
 #define MODE_DRY        4
 
 #define FAN_SPEED       25
-#define FAN_LOW         2
-#define FAN_MIDDLE      1
 #define FAN_HIGH        0
+#define FAN_MIDDLE      1
+#define FAN_MEDIUM      2
 #define FAN_AUTO        3
 
 #define SWING           27
@@ -128,7 +128,7 @@ protected:
         traits.set_supports_fan_mode_off(false);
         traits.set_supports_fan_mode_auto(true);
         traits.set_supports_fan_mode_low(true);
-        traits.set_supports_fan_mode_medium(false);
+        traits.set_supports_fan_mode_medium(true);
         traits.set_supports_fan_mode_middle(true);
         traits.set_supports_fan_mode_high(true);
         traits.set_supports_fan_mode_focus(false);
@@ -195,21 +195,25 @@ public:
                     mode = CLIMATE_MODE_AUTO;
             }
 
-            switch (data[FAN_SPEED]) {
-                case FAN_AUTO:
-                    fan_mode = CLIMATE_FAN_AUTO;
-                    break;
-                case FAN_LOW:
-                    fan_mode = CLIMATE_FAN_LOW;
-                    break;
-                case FAN_MIDDLE:
-                    fan_mode = CLIMATE_FAN_MIDDLE;
-                    break;
-                case FAN_HIGH:
-                    fan_mode = CLIMATE_FAN_HIGH;
-                    break;
-                default:
-                    fan_mode = CLIMATE_FAN_AUTO;
+            if ( data[SWING_POS] & ( 1 << SILENT_MODE_BIT_ON )) {
+                fan_mode = CLIMATE_FAN_LOW;
+            } else {
+                switch (data[FAN_SPEED]) {
+                    case FAN_AUTO:
+                        fan_mode = CLIMATE_FAN_AUTO;
+                        break;
+                    case FAN_MEDIUM:
+                        fan_mode = CLIMATE_FAN_MEDIUM;
+                        break;
+                    case FAN_MIDDLE:
+                        fan_mode = CLIMATE_FAN_MIDDLE;
+                        break;
+                    case FAN_HIGH:
+                        fan_mode = CLIMATE_FAN_HIGH;
+                        break;
+                    default:
+                        fan_mode = CLIMATE_FAN_AUTO;
+                }
             }
 
             switch (data[SWING]) {
@@ -278,19 +282,27 @@ public:
             switch(call.get_fan_mode().value()) {
                 case CLIMATE_FAN_LOW:
                     data[POWER] |= (1 << POWER_BIT_ON);
-                    data[FAN_SPEED] = FAN_LOW;
+                    data[SWING_POS] |= (1 << SILENT_MODE_BIT_ON);
                     break;
                 case CLIMATE_FAN_MIDDLE:
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_MIDDLE;
+                    data[SWING_POS] &= ~(1 << SILENT_MODE_BIT_ON);
+                    break;
+                case CLIMATE_FAN_MEDIUM:
+                    data[POWER] |= (1 << POWER_BIT_ON);
+                    data[FAN_SPEED] = FAN_MEDIUM;
+                    data[SWING_POS] &= ~(1 << SILENT_MODE_BIT_ON);
                     break;
                 case CLIMATE_FAN_HIGH:
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_HIGH;
+                    data[SWING_POS] &= ~(1 << SILENT_MODE_BIT_ON);
                     break;
                 case CLIMATE_FAN_AUTO:
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_AUTO;
+                    data[SWING_POS] &= ~(1 << SILENT_MODE_BIT_ON);
                     break;
         }
 
