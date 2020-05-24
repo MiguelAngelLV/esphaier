@@ -283,26 +283,31 @@ public:
                 case CLIMATE_FAN_LOW:
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[SWING_POS] |= (1 << SILENT_MODE_BIT_ON);
+                    data[SWING_POS] &= ~(1 << TURBO_MODE_BIT_ON);
                     break;
                 case CLIMATE_FAN_MIDDLE:
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_MIDDLE;
                     data[SWING_POS] &= ~(1 << SILENT_MODE_BIT_ON);
+                    data[SWING_POS] &= ~(1 << TURBO_MODE_BIT_ON);
                     break;
                 case CLIMATE_FAN_MEDIUM:
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_MEDIUM;
                     data[SWING_POS] &= ~(1 << SILENT_MODE_BIT_ON);
+                    data[SWING_POS] &= ~(1 << TURBO_MODE_BIT_ON);
                     break;
                 case CLIMATE_FAN_HIGH:
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_HIGH;
                     data[SWING_POS] &= ~(1 << SILENT_MODE_BIT_ON);
+                    data[SWING_POS] &= ~(1 << TURBO_MODE_BIT_ON);
                     break;
                 case CLIMATE_FAN_AUTO:
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[FAN_SPEED] = FAN_AUTO;
                     data[SWING_POS] &= ~(1 << SILENT_MODE_BIT_ON);
+                    data[SWING_POS] &= ~(1 << TURBO_MODE_BIT_ON);
                     break;
         }
 
