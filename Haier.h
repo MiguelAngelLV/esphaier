@@ -25,7 +25,7 @@ using namespace esphome::climate;
 #define FAN_SPEED   25
 #define FAN_MIN     02
 #define FAN_MIDDLE  01
-#define FAN_MAX     02
+#define FAN_MAX     00
 #define FAN_AUTO    03
 
 #define SWING        27
@@ -107,11 +107,21 @@ protected:
     ClimateTraits traits() override {
         auto traits = climate::ClimateTraits();
         traits.set_supports_away(false);
-        traits.set_supports_auto_mode(true);
+        traits.set_supports_dry_mode(true);
         traits.set_supports_heat_mode(true);
         traits.set_supports_cool_mode(true);
-        traits.set_visual_max_temperature(10);
-        traits.set_visual_max_temperature(50);
+        traits.set_supports_fan_only_mode(true);
+        traits.set_supports_heat_cool_mode(true);
+              
+        
+        traits.set_supports_fan_mode_low(true);
+        traits.set_supports_fan_mode_auto(true);
+        traits.set_supports_fan_mode_high(true);
+        traits.set_supports_fan_mode_medium(true);
+         
+        
+        traits.set_visual_max_temperature(16);
+        traits.set_visual_max_temperature(30);
         traits.set_visual_temperature_step(1.0f);
         traits.set_supports_current_temperature(true);
 
@@ -143,7 +153,7 @@ public:
         target_temperature = data[SET_TEMPERATURE] + 16;
 
 
-        if (data[POWER] == POWER_OFF) {
+        if (data[POWER] == 0 || data[POWER] == 8 ) {
             mode = CLIMATE_MODE_OFF;
 
         } else {
@@ -155,12 +165,38 @@ public:
                 case MODE_HEAT:
                     mode = CLIMATE_MODE_HEAT;
                     break;
+                case MODE_ONLY_FAN:
+                    mode = CLIMATE_MODE_FAN_ONLY;
+                    break;
                 default:
-                    mode = CLIMATE_MODE_AUTO;
+                    mode = CLIMATE_MODE_HEAT_COOL;
             }
-
+            
+            
+             switch(data[FAN_SPEED]) {
+                case FAN_AUTO:
+                    fan_mode = CLIMATE_FAN_AUTO;
+                    break;
+                    
+                case FAN_MIN:
+                    fan_mode = CLIMATE_FAN_LOW;
+                    break;
+                    
+                case FAN_MIDDLE:
+                    fan_mode = CLIMATE_FAN_MEDIUM;
+                    break;
+                    
+                case FAN_MAX:
+                    fan_mode = CLIMATE_FAN_HIGH;
+                    break;
+            }
+            
 
         }
+        
+        
+        
+        
 
         this->publish_state();
 
@@ -174,6 +210,8 @@ public:
                 case CLIMATE_MODE_OFF:
                     data[POWER] = POWER_OFF;
                     break;
+                    
+                case CLIMATE_MODE_HEAT_COOL:
                 case CLIMATE_MODE_AUTO:
                     data[POWER] = POWER_ON;
                     data[MODE] = MODE_SMART;
@@ -186,12 +224,45 @@ public:
                     data[POWER] = POWER_ON;
                     data[MODE] = MODE_COOL;
                     break;
+                    
+                case CLIMATE_MODE_FAN_ONLY:
+                    data[POWER] = POWER_ON;
+                    data[MODE] = MODE_ONLY_FAN;
+                    break;
+                    
+                case CLIMATE_MODE_DRY:
+                    data[POWER] = POWER_ON;
+                    data[MODE] = MODE_DRY;
+                    break;
             }
 
 
         if (call.get_target_temperature().has_value()) {
             data[SET_TEMPERATURE] = (uint16) call.get_target_temperature().value() - 16;
         }
+        
+        if (call.get_fan_mode().has_value()) {
+            switch(call.get_fan_mode().value()) {
+                case CLIMATE_FAN_AUTO:
+                    data[FAN_SPEED] = FAN_AUTO;
+                    break;
+                    
+                case CLIMATE_FAN_LOW:
+                    data[FAN_SPEED] = FAN_MIN;
+                    break;
+                    
+                case CLIMATE_FAN_MEDIUM:
+                    data[FAN_SPEED] = FAN_MIDDLE;
+                    break;
+                    
+                case CLIMATE_FAN_HIGH:
+                    data[FAN_SPEED] = FAN_MAX;
+                    break;
+            }
+            
+        }
+        
+        
 
         //Values for "send"
         data[COMMAND] = 0;
