@@ -118,29 +118,42 @@ public:
 protected:
     ClimateTraits traits() override {
         auto traits = climate::ClimateTraits();
-        traits.set_supports_away(false);
-        traits.set_supports_auto_mode(true);
-        traits.set_supports_heat_mode(true);
-        traits.set_supports_cool_mode(true);
-        traits.set_supports_dry_mode(true);
-        traits.set_supports_fan_only_mode(true);
-        traits.set_supports_fan_mode_on(false);
-        traits.set_supports_fan_mode_off(false);
-        traits.set_supports_fan_mode_auto(true);
-        traits.set_supports_fan_mode_low(true);
-        traits.set_supports_fan_mode_medium(true);
-        traits.set_supports_fan_mode_middle(true);
-        traits.set_supports_fan_mode_high(true);
-        traits.set_supports_fan_mode_focus(false);
-        traits.set_supports_fan_mode_diffuse(false);
+
+
+        traits.set_supports_action(true);
+
+        traits.set_supported_modes(
+        {
+            climate::CLIMATE_MODE_OFF,
+            climate::CLIMATE_MODE_HEAT_COOL,
+            climate::CLIMATE_MODE_COOL,
+            climate::CLIMATE_MODE_HEAT,
+            climate::CLIMATE_MODE_FAN_ONLY,
+            climate::CLIMATE_MODE_DRY
+        });
+
+        traits.set_supported_fan_modes(
+        {
+            climate::CLIMATE_FAN_AUTO,
+            climate::CLIMATE_FAN_LOW,
+            climate::CLIMATE_FAN_MEDIUM,
+            climate::CLIMATE_FAN_HIGH,
+            climate::CLIMATE_FAN_MIDDLE,
+        });
+
+        traits.set_supported_swing_modes(
+        {
+            climate::CLIMATE_SWING_OFF,
+            climate::CLIMATE_SWING_BOTH,
+            climate::CLIMATE_SWING_VERTICAL,
+            climate::CLIMATE_SWING_HORIZONTAL
+        });
+
         traits.set_visual_min_temperature(MIN_SET_TEMPERATURE);
         traits.set_visual_max_temperature(MAX_SET_TEMPERATURE);
         traits.set_visual_temperature_step(STEP_TEMPERATURE);
         traits.set_supports_current_temperature(true);
-        traits.set_supports_swing_mode_off(true);
-        traits.set_supports_swing_mode_both(true);
-        traits.set_supports_swing_mode_vertical(true);
-        traits.set_supports_swing_mode_horizontal(true);
+        traits.set_supports_two_point_target_temperature(false);
 
         return traits;
     }
@@ -192,7 +205,7 @@ public:
                     mode = CLIMATE_MODE_FAN_ONLY;
                     break;
                 default:
-                    mode = CLIMATE_MODE_AUTO;
+                    mode = CLIMATE_MODE_HEAT_COOL;
             }
 
             if ( data[SWING_POS] & ( 1 << SILENT_MODE_BIT_ON )) {
@@ -271,7 +284,7 @@ public:
                     data[FAN_SPEED] = FAN_MIDDLE; // set fan speed for change work mode
                     data[MODE] = MODE_FAN_ONLY;
                     break;
-                case CLIMATE_MODE_AUTO:
+                case CLIMATE_MODE_HEAT_COOL:
                     data[POWER] |= (1 << POWER_BIT_ON);
                     data[MODE] = MODE_SMART;
                     break;
