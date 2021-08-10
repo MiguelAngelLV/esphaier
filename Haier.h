@@ -168,6 +168,9 @@ public:
                 case MODE_ONLY_FAN:
                     mode = CLIMATE_MODE_FAN_ONLY;
                     break;
+		case MODE_DRY:
+                    mode = CLIMATE_MODE_DRY;
+                    break;
                 default:
                     mode = CLIMATE_MODE_HEAT_COOL;
             }
