@@ -42,12 +42,9 @@ using namespace esphome::climate;
 #define SWING_VERTICAL_MASK     (1 << 4)
 
 
-
 #define LOCK                28
 #define LOCK_ON             80
 #define LOCK_OFF            0
-
-
 
 
 #define POWER               29
@@ -66,7 +63,6 @@ using namespace esphome::climate;
 #define CRC                 36
 
 
-
 #define CONFORT_PRESET_MASK     (1 << 3)
 
 
@@ -79,21 +75,18 @@ using namespace esphome::climate;
 #define MAX_VALID_TEMPERATURE 50
 
 
-
-
 class Haier : public Climate, public PollingComponent {
 
 private:
 
     byte lastCRC;
     byte data[37];
-    byte poll[13] = {255,255,10,0,0,0,0,0,1,1,77,1,90};
-    byte on[13]   = {255,255,10,0,0,0,0,0,1,1,77,2,91};
-    byte off[13]  = {255,255,10,0,0,0,0,0,1,1,77,3,92};
+    byte poll[13] = {255, 255, 10, 0, 0, 0, 0, 0, 1, 1, 77, 1, 90};
+    byte on[13] = {255, 255, 10, 0, 0, 0, 0, 0, 1, 1, 77, 2, 91};
+    byte off[13] = {255, 255, 10, 0, 0, 0, 0, 0, 1, 1, 77, 3, 92};
 
 
     bool swing;
-
 
 
 public:
@@ -105,7 +98,6 @@ public:
     }
 
 
-
     void setup() override {
 
         Serial.begin(9600);
@@ -113,7 +105,7 @@ public:
 
     }
 
-    void loop() override  {
+    void loop() override {
 
 
         if (Serial.available() > 0) {
@@ -124,7 +116,7 @@ public:
             data[0] = 255;
             data[1] = 255;
 
-            Serial.readBytes(data+2, sizeof(data)-2);
+            Serial.readBytes(data + 2, sizeof(data) - 2);
 
             readData();
 
@@ -182,9 +174,6 @@ protected:
         traits.add_supported_preset(CLIMATE_PRESET_COMFORT);
 
 
-
-
-
         return traits;
     }
 
@@ -214,13 +203,11 @@ public:
             current_temperature = data[TEMPERATURE];
 
 
-
         target_temperature = data[SET_TEMPERATURE] + 16;
 
 
         if (data[POWER] & DECIMAL_MASK)
             target_temperature += 0.5f;
-
 
 
         switch (data[MODE]) {
@@ -244,8 +231,7 @@ public:
         }
 
 
-
-        switch(data[FAN_SPEED]) {
+        switch (data[FAN_SPEED]) {
             case FAN_AUTO:
                 fan_mode = CLIMATE_FAN_AUTO;
                 break;
@@ -264,7 +250,6 @@ public:
         }
 
 
-
         if (data[SWING] == SWING_OFF) {
             if (data[SWING_MODE] & SWING_HORIZONTAL_MASK)
                 swing_mode = CLIMATE_SWING_HORIZONTAL;
@@ -276,21 +261,16 @@ public:
             swing_mode = CLIMATE_SWING_BOTH;
 
 
-
-
-
         if (data[POWER] & CONFORT_PRESET_MASK)
             preset = CLIMATE_PRESET_COMFORT;
         else
             preset = CLIMATE_PRESET_NONE;
 
 
-
         if ((data[POWER] & POWER_MASK) == 0) {
             mode = CLIMATE_MODE_OFF;
             fan_mode = CLIMATE_FAN_OFF;
         }
-
 
 
         this->publish_state();
@@ -300,6 +280,11 @@ public:
 
     void control(const ClimateCall &call) override {
 
+
+        if (call.get_mode().value() != esphome::climate::CLIMATE_MODE_OFF && (data[POWER] & POWER_MASK) == 0)
+            sendData(on, sizeof(on));
+
+
         if (call.get_mode().has_value()) {
             switch (call.get_mode().value()) {
                 case CLIMATE_MODE_OFF:
@@ -307,6 +292,7 @@ public:
                     break;
 
                 case CLIMATE_MODE_HEAT_COOL:
+                case CLIMATE_MODE_AUTO:
                     data[MODE] = MODE_SMART;
                     break;
                 case CLIMATE_MODE_HEAT:
@@ -323,11 +309,10 @@ public:
                 case CLIMATE_MODE_DRY:
                     data[MODE] = MODE_DRY;
                     break;
+
             }
 
         }
-
-
 
 
         if (call.get_preset().has_value()) {
@@ -340,9 +325,6 @@ public:
 
 
         }
-
-
-
 
 
         if (call.get_target_temperature().has_value()) {
@@ -359,30 +341,33 @@ public:
         }
 
         if (call.get_fan_mode().has_value()) {
-            switch(call.get_fan_mode().value()) {
+            switch (call.get_fan_mode().value()) {
                 case CLIMATE_FAN_AUTO:
                     data[FAN_SPEED] = FAN_AUTO;
                     break;
-
                 case CLIMATE_FAN_LOW:
                     data[FAN_SPEED] = FAN_MIN;
                     break;
-
                 case CLIMATE_FAN_MEDIUM:
                     data[FAN_SPEED] = FAN_MIDDLE;
                     break;
-
                 case CLIMATE_FAN_HIGH:
                     data[FAN_SPEED] = FAN_MAX;
+                    break;
+
+                case CLIMATE_FAN_ON:
+                case CLIMATE_FAN_OFF:
+                case CLIMATE_FAN_MIDDLE:
+                case CLIMATE_FAN_FOCUS:
+                case CLIMATE_FAN_DIFFUSE:
                     break;
             }
 
         }
 
 
-
         if (call.get_swing_mode().has_value())
-            switch(call.get_swing_mode().value()) {
+            switch (call.get_swing_mode().value()) {
                 case CLIMATE_SWING_OFF:
                     data[SWING] = SWING_OFF;
                     data[SWING_MODE] &= ~1;
@@ -420,10 +405,10 @@ public:
     }
 
 
-    void sendData(byte * message, byte size) {
+    void sendData(byte *message, byte size) {
 
         byte crc = getChecksum(message, size);
-        Serial.write(message, size-1);
+        Serial.write(message, size - 1);
         Serial.write(crc);
 
         auto raw = getHex(message, size);
@@ -431,11 +416,11 @@ public:
 
     }
 
-    String getHex(byte * message, byte size) {
+    String getHex(byte *message, byte size) {
 
         String raw;
 
-        for (int i=0; i < size; i++){
+        for (int i = 0; i < size; i++) {
             raw += "\n" + String(i) + "-" + String(message[i]);
 
         }
@@ -446,7 +431,7 @@ public:
 
     }
 
-    byte getChecksum(const byte * message, size_t size) {
+    byte getChecksum(const byte *message, size_t size) {
         byte position = size - 1;
         byte crc = 0;
 
@@ -456,8 +441,6 @@ public:
         return crc;
 
     }
-
-
 
 
 };
