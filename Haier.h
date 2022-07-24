@@ -92,7 +92,7 @@ private:
 public:
 
 
-    Haier(bool swing) : PollingComponent(30 * 1000) {
+    Haier(bool swing) : PollingComponent(5 * 1000) {
         lastCRC = 0;
         this->swing = swing;
     }
@@ -281,8 +281,10 @@ public:
     void control(const ClimateCall &call) override {
 
 
-        if (call.get_mode().value() != esphome::climate::CLIMATE_MODE_OFF && (data[POWER] & POWER_MASK) == 0)
+        if (call.get_mode().value() != esphome::climate::CLIMATE_MODE_OFF && (data[POWER] & POWER_MASK) == 0) {
             sendData(on, sizeof(on));
+            delay(1000);
+        }
 
 
         if (call.get_mode().has_value()) {
