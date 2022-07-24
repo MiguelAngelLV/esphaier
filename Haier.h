@@ -269,7 +269,6 @@ public:
 
         if ((data[POWER] & POWER_MASK) == 0) {
             mode = CLIMATE_MODE_OFF;
-            fan_mode = CLIMATE_FAN_OFF;
         }
 
 
@@ -281,11 +280,6 @@ public:
     void control(const ClimateCall &call) override {
 
 
-        if (call.get_mode().value() != esphome::climate::CLIMATE_MODE_OFF && (data[POWER] & POWER_MASK) == 0) {
-            sendData(on, sizeof(on));
-            delay(1000);
-        }
-
 
         if (call.get_mode().has_value()) {
             switch (call.get_mode().value()) {
@@ -295,20 +289,25 @@ public:
 
                 case CLIMATE_MODE_HEAT_COOL:
                 case CLIMATE_MODE_AUTO:
+                    data[POWER] |= POWER_MASK;
                     data[MODE] = MODE_SMART;
                     break;
                 case CLIMATE_MODE_HEAT:
+                    data[POWER] |= POWER_MASK;
                     data[MODE] = MODE_HEAT;
                     break;
                 case CLIMATE_MODE_COOL:
+                    data[POWER] |= POWER_MASK;
                     data[MODE] = MODE_COOL;
                     break;
 
                 case CLIMATE_MODE_FAN_ONLY:
+                    data[POWER] |= POWER_MASK;
                     data[MODE] = MODE_ONLY_FAN;
                     break;
 
                 case CLIMATE_MODE_DRY:
+                    data[POWER] |= POWER_MASK;
                     data[MODE] = MODE_DRY;
                     break;
 
