@@ -153,7 +153,7 @@ public:
         target_temperature = data[SET_TEMPERATURE] + 16;
 
 
-        if (data[POWER] == 0 || data[POWER] == 8 ) {
+        if (data[POWER] == 0 || data[POWER] == 8 || data[POWER] == 40 ) {
             mode = CLIMATE_MODE_OFF;
 
         } else {
