@@ -30,7 +30,8 @@ ota:
 climate:
   - platform: custom
     lambda: |-
-      auto haier = new Haier();
+      bool swing = false;
+      auto haier = new Haier(swing);
       App.register_component(haier);
       return {haier};
     climates:
