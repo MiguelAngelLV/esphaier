@@ -332,7 +332,7 @@ public:
 
             float target = call.get_target_temperature().value() - 16;
 
-            data[SET_TEMPERATURE] = (uint16) target;
+            data[SET_TEMPERATURE] = (uint16_t) target;
 
             if ((int) target == (int) (target + 0.5))
                 data[POWER] &= ~DECIMAL_MASK;
